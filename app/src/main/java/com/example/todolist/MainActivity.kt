@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Display
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.example.todolist.database.ToDoListDB
 import com.example.todolist.database.ToDoListEntity
@@ -18,7 +20,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         db = Room.databaseBuilder(applicationContext, ToDoListDB::class.java, "Database-TodoList").build()
-        val task1 = ToDoListEntity("Тестовая задача",0)
+
+        val task1 = ToDoListEntity("Тестовая задача",2)
 
         GlobalScope.launch{
             db.ToDoListDao().insert(task1)
@@ -26,7 +29,7 @@ class MainActivity : AppCompatActivity() {
             displayTasks()
         }
     }
-
+/*
     private suspend fun displayTasks(){
         val tasks = db.ToDoListDao().getList()
         val display = findViewById<TextView>(R.id.display)
@@ -35,5 +38,13 @@ class MainActivity : AppCompatActivity() {
             displayText += "${task.title} ${task.priority}\n"
         }
         display.text = displayText
+    }*/
+    private suspend fun displayTasks(){
+        val itemsList = findViewById<RecyclerView>(R.id.itemsTasks)
+        val items = db.ToDoListDao().getList()
+
+        itemsList.layoutManager = LinearLayoutManager(this)
+        itemsList.adapter = tasks_adapter(items,this)
     }
+
 }
