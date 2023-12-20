@@ -4,8 +4,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity
-data class ToDoEntity(
-    @PrimaryKey (autoGenerate = true) val id: Long,
+data class ToDoListEntity (
+
     var title: String = "",
     var priority: Int = 0
-)
+) {
+    @PrimaryKey (autoGenerate = true) var id: Int? = null
+}
