@@ -1,50 +1,91 @@
 package com.example.todolist
 
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import android.view.Display
-import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
+import com.example.todolist.database.ToDoList
 import com.example.todolist.database.ToDoListDB
-import com.example.todolist.database.ToDoListEntity
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.example.todolist.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
 
-    lateinit var db: ToDoListDB
+class MainActivity :  AppCompatActivity(), ToDoListAdapter.TodoClickListener {
+
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var database: ToDoListDB
+    lateinit var viewModel: ToDoListViewModel
+    lateinit var adapter: ToDoListAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        db = Room.databaseBuilder(applicationContext, ToDoListDB::class.java, "Database-TodoList").build()
+        initUI()
 
-        val task1 = ToDoListEntity("Тестовая задача",2)
+        viewModel = ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+        ).get(ToDoListViewModel::class.java)
 
-        GlobalScope.launch{
-            db.ToDoListDao().insert(task1)
-
-            displayTasks()
+        viewModel.allTodo.observe(this) { list ->
+            list?.let {
+                adapter.updateList(list)
+            }
         }
+
+        database = ToDoListDB.getDatabase(this)
+
     }
-/*
-    private suspend fun displayTasks(){
-        val tasks = db.ToDoListDao().getList()
-        val display = findViewById<TextView>(R.id.display)
-        var displayText = ""
-        for (task in tasks){
-            displayText += "${task.title} ${task.priority}\n"
-        }
-        display.text = displayText
-    }*/
-    private suspend fun displayTasks(){
-        val itemsList = findViewById<RecyclerView>(R.id.itemsTasks)
-        val items = db.ToDoListDao().getList()
 
-        itemsList.layoutManager = LinearLayoutManager(this)
-        itemsList.adapter = tasks_adapter(items,this)
+    private fun initUI() {
+        binding.itemsTasks.setHasFixedSize(true)
+        binding.itemsTasks.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        adapter = ToDoListAdapter(this, this)
+        binding.itemsTasks.adapter = adapter
+
+        val getContent =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val todo = result.data?.getSerializableExtra("todo") as? ToDoList
+                    if (todo != null) {
+                        viewModel.insertTodo(todo)
+                    }
+                }
+            }
+
+        binding.btnAdd.setOnClickListener {
+            val intent = Intent(this, AddTaskActivity::class.java)
+            getContent.launch(intent)
+        }
+
+    }
+
+    private val updateOrDeleteTodo =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val todo = result.data?.getSerializableExtra("todo") as ToDoList
+                val isDelete = result.data?.getBooleanExtra("delete_todo", false) as Boolean
+                if (todo != null && !isDelete) {
+                    viewModel.updateTodo(todo)
+                }else if(todo != null && isDelete){
+                    viewModel.deleteTodo(todo)
+                }
+            }
+        }
+
+
+
+    override fun onItemClicked(todo: ToDoList) {
+        val intent = Intent(this@MainActivity, AddTaskActivity::class.java)
+        intent.putExtra("current_todo", todo)
+        updateOrDeleteTodo.launch(intent)
     }
 
 }

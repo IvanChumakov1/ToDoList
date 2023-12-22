@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">ToDoList</string>
     <string name="todo">TODO</string>
+    <string name="string_input">Описание</string>
+    <string name="string_priority_group">Приоритет</string>
+    <string name="string_priority1">Срочно</string>
+    <string name="string_priority2">Обычно</string>
+    <string name="string_priority3">Не срочно</string>
 </resources>
