@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import com.example.todolist.database.ToDoList
 import com.example.todolist.databinding.ActivityAddTaskBinding
@@ -31,6 +32,11 @@ class AddTaskActivity : AppCompatActivity() {
                 isUpdate = true
             }catch (e: Exception){
                 e.printStackTrace()
+            }
+            if(isUpdate){
+                binding.imgDelete.visibility = View.VISIBLE
+            }else{
+                binding.imgDelete.visibility = View.INVISIBLE
             }
 
             binding.saveTask.setOnClickListener {
